@@ -193,11 +193,20 @@ class SolrSearchBackend(BaseSearchBackend):
 
         if facets is not None:
             kwargs['facet'] = 'on'
-            kwargs['facet.field'] = facets.keys()
-
+            facet_fields = []
             for facet_field, options in facets.items():
+                tags = options.pop('tags', None)
+                prefix = ''
+                if tags:
+                    prefix = '{!ex=%s}' % (','.join(tags))
+
+                facet_fields.append('%s%s' % (prefix, facet_field))
+
                 for key, value in options.items():
-                    kwargs['f.%s.facet.%s' % (facet_field, key)] = self.conn._from_python(value)
+                    kwargs['f.%s.facet.%s' % (
+                    facet_field, key)] = self.conn._from_python(value)
+
+            kwargs['facet.field'] = facet_fields
 
         if date_facets is not None:
             kwargs['facet'] = 'on'
